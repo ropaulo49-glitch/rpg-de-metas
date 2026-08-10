@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Level Up — Metas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: radial-gradient(circle at 20% 0%, #142038 0%, #0B1220 55%);
+    font-family: 'Manrope', sans-serif; color: #E8EEF5; padding-bottom: 60px;
+  }
+  .rajdhani { font-family: 'Rajdhani', sans-serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  button { cursor: pointer; font-family: inherit; }
+  input { font-family: inherit; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #1E2A45; border-radius: 4px; }
+  @keyframes popIn { from { opacity: 0; transform: scale(.85) translateY(10px);} to { opacity: 1; transform: scale(1) translateY(0);} }
+  @keyframes glow { 0%,100% { box-shadow: 0 0 0px rgba(76,211,232,0);} 50% { box-shadow: 0 0 24px rgba(76,211,232,.35);} }
+
+  .wrap { padding: 28px 20px 20px; max-width: 640px; margin: 0 auto; }
+  .hud { display:flex; align-items:center; gap:16px; }
+  .ring { width:74px; height:74px; border-radius:50%; display:flex; align-items:center; justify-content:center; animation: glow 2.4s ease-in-out infinite; flex-shrink:0; }
+  .ring-inner { width:58px; height:58px; border-radius:50%; background:#0F1830; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .lvl-num { font-size:22px; font-weight:700; line-height:1; }
+  .lvl-lbl { font-size:8px; color:#7C8AA5; }
+  .title-line { font-size:20px; font-weight:700; color:#4CD3E8; letter-spacing:.3px; }
+  .xp-line { font-size:11px; color:#7C8AA5; margin-top:2px; }
+  .barbg { height:8px; background:#1E2A45; border-radius:4px; margin-top:8px; overflow:hidden; }
+  .barfg { height:100%; background:linear-gradient(90deg,#4CD3E8,#FF8A3D); border-radius:4px; transition:width .4s ease; }
+
+  .session-btn { margin-top:18px; width:100%; padding:12px 16px; border-radius:12px; background:#131B2E; border:1px solid #24314F; color:#E8EEF5; display:flex; align-items:center; justify-content:space-between; }
+
+  .section-head { display:flex; align-items:center; justify-content:space-between; margin: 24px 0 12px; }
+  .section-title { font-weight:700; font-size:18px; display:flex; align-items:center; gap:8px; }
+  .new-btn { background:#4CD3E8; border:none; border-radius:8px; padding:6px 10px; display:flex; align-items:center; gap:4px; color:#0B1220; font-weight:700; }
+
+  .empty { padding:24px; text-align:center; color:#7C8AA5; background:#111A2E; border-radius:14px; border:1px dashed #24314F; }
+
+  .card { background:#111A2E; border:1px solid #1E2A45; border-radius:14px; padding:16px; margin-bottom:12px; }
+  .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .card-title { font-weight:700; font-size:16px; }
+  .card-sub { font-size:11px; color:#7C8AA5; margin-top:2px; }
+  .xp-pill { display:flex; align-items:center; gap:4px; background:#1E2A45; padding:3px 8px; border-radius:20px; font-size:11px; }
+  .thinbar { height:6px; background:#1E2A45; border-radius:3px; margin-top:12px; overflow:hidden; }
+  .thinbar-fg { height:100%; border-radius:3px; transition:width .3s; }
+  .reward-line { display:flex; align-items:center; gap:6px; margin-top:10px; color:#FF8A3D; font-size:12px; }
+  .card-actions { display:flex; gap:8px; margin-top:12px; }
+  .num-input { width:90px; background:#0B1220; border:1px solid #24314F; border-radius:8px; padding:6px 8px; color:#E8EEF5; }
+  .complete-btn { flex:1; border-radius:8px; border:none; padding:6px 10px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .complete-btn.ready { background:#4CD3E8; color:#0B1220; }
+  .complete-btn.notready { background:#1E2A45; color:#7C8AA5; cursor:not-allowed; }
+
+  .done-row { display:flex; justify-content:space-between; padding:10px 14px; background:#111A2E; border-radius:10px; margin-bottom:8px; opacity:.75; font-size:13px; }
+
+  .overlay { position:fixed; inset:0; background:rgba(11,18,32,.85); display:flex; align-items:center; justify-content:center; z-index:50; padding:20px; }
+  .overlay.bottom { align-items:flex-end; background:rgba(11,18,32,.8); z-index:40; }
+  .modal { animation: popIn .25s ease; background:#111A2E; border:1px solid #24314F; border-radius:18px 18px 0 0; padding:22px; width:100%; max-width:480px; max-height:85vh; overflow-y:auto; }
+  .unlock { animation: popIn .3s ease; background:#111A2E; border:1px solid #4CD3E8; border-radius:18px; padding:28px; max-width:340px; text-align:center; }
+  .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .close-btn { background:none; border:none; color:#7C8AA5; font-size:20px; line-height:1; }
+  .field { display:block; margin-bottom:12px; font-size:12px; color:#7C8AA5; }
+  .field input { width:100%; background:#0B1220; border:1px solid #24314F; border-radius:8px; padding:9px 10px; color:#E8EEF5; margin-top:4px; }
+  .row2 { display:flex; gap:10px; }
+  .row2 .field { flex:1; }
+  .submit-btn { margin-top:8px; width:100%; padding:12px; border-radius:10px; border:none; background:#4CD3E8; color:#0B1220; font-weight:700; }
+  .submit-btn.orange { background:#FF8A3D; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="hud">
+    <div class="ring" id="ring">
+      <div class="ring-inner">
+        <span class="rajdhani lvl-num" id="lvlNum">1</span>
+        <span class="mono lvl-lbl">NÍVEL</span>
+      </div>
+    </div>
+    <div style="flex:1; min-width:0;">
+      <div class="rajdhani title-line" id="titleLine">Estagiário de Gelo</div>
+      <div class="mono xp-line" id="xpLine">0 / 100 XP · total 0 XP</div>
+      <div class="barbg"><div class="barfg" id="xpBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <button class="session-btn" id="openSession">
+    <span style="display:flex; align-items:center; gap:8px;">🔥 <span class="rajdhani" style="font-weight:700; font-size:15px;">Registrar sessão de foco</span></span>
+    <span>›</span>
+  </button>
+</div>
+
+<div class="wrap" style="padding-top:0;">
+  <div class="section-head">
+    <div class="section-title">⚔️ Missões ativas</div>
+    <button class="new-btn" id="openAdd">+ nova</button>
+  </div>
+  <div id="activeList"></div>
+  <div id="doneWrap"></div>
+</div>
+
+<!-- Add goal modal -->
+<div class="overlay bottom hidden" id="addOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="rajdhani" style="font-size:18px; font-weight:700;">Nova missão</span>
+      <button class="close-btn" id="closeAdd">✕</button>
+    </div>
+    <label class="field">Título da meta<input id="fTitle" placeholder="Ex: 500 seguidores no Instagram" /></label>
+    <div class="row2">
+      <label class="field">Meta (número)<input id="fTarget" type="number" placeholder="500" /></label>
+      <label class="field">Unidade<input id="fUnit" placeholder="seguidores" /></label>
+    </div>
+    <label class="field">Valor atual<input id="fCurrent" type="number" value="0" /></label>
+    <label class="field">Recompensa<input id="fReward" placeholder="Ex: jantar fora, comprar algo, folga" /></label>
+    <label class="field">XP ao concluir<input id="fXp" type="number" value="150" /></label>
+    <button class="submit-btn" id="submitAdd">Criar missão</button>
+  </div>
+</div>
+
+<!-- Session modal -->
+<div class="overlay bottom hidden" id="sessionOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="rajdhani" style="font-size:18px; font-weight:700;">Sessão de foco</span>
+      <button class="close-btn" id="closeSession">✕</button>
+    </div>
+    <p style="font-size:13px; color:#7C8AA5; margin-top:0;">Cada 30 min focado = 15 XP. Registre igual você contaria as horas de jogo.</p>
+    <label class="field">Minutos focado<input id="fMin" type="number" value="30" /></label>
+    <button class="submit-btn orange" id="submitSession">⏱ registrar</button>
+  </div>
+</div>
+
+<!-- Unlock overlay -->
+<div class="overlay hidden" id="unlockOverlay">
+  <div class="unlock">
+    <div style="font-size:36px;">✨</div>
+    <div class="rajdhani" style="font-size:22px; font-weight:700; color:#4CD3E8;">Missão concluída!</div>
+    <div style="margin-top:6px;" id="unlockTitle"></div>
+    <div class="mono" style="margin-top:10px; color:#FFD166;" id="unlockXp"></div>
+    <div style="margin-top:14px; display:flex; align-items:center; justify-content:center; gap:6px; color:#FF8A3D;">🎁 <span id="unlockReward"></span></div>
+    <button class="submit-btn" id="closeUnlock" style="margin-top:18px; width:auto; padding:10px 20px;">resgatar</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'nivelup-state';
+const TITLES = ["Estagiário de Gelo","Vendedor de Balcão","Rota Traçada","Estrategista Jr.","Mestre da Vitrine","Diretor de Marca","Lenda de Ilhéus"];
+const uid = () => Math.random().toString(36).slice(2,10);
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { xp: 0, goals: [], rewardLog: [], sessions: [] };
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) { console.error('Falha ao salvar', e); }
+}
+
+let state = loadState();
+
+function levelFromXp(xp) {
+  let level = 1, needed = 100, acc = 0;
+  while (xp >= acc + needed) { acc += needed; level += 1; needed = 100*level; }
+  return { level, xpIntoLevel: xp - acc, xpForLevel: needed };
+}
+function titleForLevel(level) {
+  const idx = Math.min(Math.floor((level-1)/2), TITLES.length-1);
+  return TITLES[idx];
+}
+
+function render() {
+  const { level, xpIntoLevel, xpForLevel } = levelFromXp(state.xp);
+  const pct = Math.round((xpIntoLevel/xpForLevel)*100);
+  document.getElementById('lvlNum').textContent = level;
+  document.getElementById('titleLine').textContent = titleForLevel(level);
+  document.getElementById('xpLine').textContent = `${xpIntoLevel} / ${xpForLevel} XP · total ${state.xp} XP`;
+  document.getElementById('xpBar').style.width = pct + '%';
+  document.getElementById('ring').style.background = `conic-gradient(#4CD3E8 ${pct}%, #1E2A45 0)`;
+
+  const active = state.goals.filter(g => g.status === 'active');
+  const done = state.goals.filter(g => g.status === 'done');
+
+  const activeList = document.getElementById('activeList');
+  activeList.innerHTML = '';
+  if (active.length === 0) {
+    activeList.innerHTML = '<div class="empty">Nenhuma missão ativa. Crie uma meta e defina a recompensa.</div>';
+  } else {
+    active.forEach(g => {
+      const gpct = Math.min(100, Math.round((g.current/g.target)*100));
+      const ready = g.current >= g.target;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-top">
+          <div>
+            <div class="rajdhani card-title">${escapeHtml(g.title)}</div>
+            <div class="mono card-sub">${g.current} / ${g.target} ${escapeHtml(g.unit)}</div>
+          </div>
+          <div class="xp-pill mono">⚡ ${g.xp} XP</div>
+        </div>
+        <div class="thinbar"><div class="thinbar-fg" style="width:${gpct}%; background:${ready ? '#4ADE80' : '#4CD3E8'}"></div></div>
+        <div class="reward-line">🎁 ${escapeHtml(g.reward)}</div>
+        <div class="card-actions">
+          <input class="num-input" type="number" value="${g.current}" data-id="${g.id}" />
+          <button class="complete-btn ${ready ? 'ready' : 'notready'}" data-id="${g.id}" ${ready ? '' : 'disabled'}>✓ concluir e resgatar</button>
+        </div>
+      `;
+      activeList.appendChild(card);
+    });
+  }
+
+  const doneWrap = document.getElementById('doneWrap');
+  doneWrap.innerHTML = '';
+  if (done.length > 0) {
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = '<div class="section-title">🏆 Concluídas</div>';
+    doneWrap.appendChild(head);
+    done.forEach(g => {
+      const row = document.createElement('div');
+      row.className = 'done-row';
+      row.innerHTML = `<span>${escapeHtml(g.title)}</span><span class="mono" style="color:#FFD166;">+${g.xp} XP</span>`;
+      doneWrap.appendChild(row);
+    });
+  }
+
+  activeList.querySelectorAll('.num-input').forEach(inp => {
+    inp.addEventListener('change', e => {
+      const id = e.target.getAttribute('data-id');
+      const val = Number(e.target.value) || 0;
+      const goal = state.goals.find(x => x.id === id);
+      if (goal) { goal.current = val; saveState(); render(); }
+    });
+  });
+  activeList.querySelectorAll('.complete-btn.ready').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const id = e.target.getAttribute('data-id');
+      const goal = state.goals.find(x => x.id === id);
+      if (goal) completeGoal(goal);
+    });
+  });
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function completeGoal(goal) {
+  goal.status = 'done';
+  goal.current = goal.target;
+  goal.completedAt = Date.now();
+  state.xp += goal.xp;
+  state.rewardLog.unshift({ id: uid(), goalTitle: goal.title, reward: goal.reward, xp: goal.xp, at: Date.now() });
+  saveState();
+  render();
+  showUnlock(goal);
+}
+
+function showUnlock(goal) {
+  document.getElementById('unlockTitle').textContent = goal.title;
+  document.getElementById('unlockXp').textContent = `+${goal.xp} XP`;
+  document.getElementById('unlockReward').textContent = goal.reward;
+  document.getElementById('unlockOverlay').classList.remove('hidden');
+}
+
+// Modal wiring
+const addOverlay = document.getElementById('addOverlay');
+const sessionOverlay = document.getElementById('sessionOverlay');
+const unlockOverlay = document.getElementById('unlockOverlay');
+
+document.getElementById('openAdd').addEventListener('click', () => addOverlay.classList.remove('hidden'));
+document.getElementById('closeAdd').addEventListener('click', () => addOverlay.classList.add('hidden'));
+addOverlay.addEventListener('click', e => { if (e.target === addOverlay) addOverlay.classList.add('hidden'); });
+
+document.getElementById('openSession').addEventListener('click', () => sessionOverlay.classList.remove('hidden'));
+document.getElementById('closeSession').addEventListener('click', () => sessionOverlay.classList.add('hidden'));
+sessionOverlay.addEventListener('click', e => { if (e.target === sessionOverlay) sessionOverlay.classList.add('hidden'); });
+
+document.getElementById('closeUnlock').addEventListener('click', () => unlockOverlay.classList.add('hidden'));
+unlockOverlay.addEventListener('click', e => { if (e.target === unlockOverlay) unlockOverlay.classList.add('hidden'); });
+
+document.getElementById('submitAdd').addEventListener('click', () => {
+  const title = document.getElementById('fTitle').value.trim();
+  const target = Number(document.getElementById('fTarget').value);
+  if (!title || !target) return;
+  const goal = {
+    id: uid(),
+    title,
+    target,
+    unit: document.getElementById('fUnit').value.trim() || 'un.',
+    current: Number(document.getElementById('fCurrent').value) || 0,
+    reward: document.getElementById('fReward').value.trim() || 'Recompensa livre',
+    xp: Number(document.getElementById('fXp').value) || 100,
+    status: 'active',
+    createdAt: Date.now(),
+  };
+  state.goals.unshift(goal);
+  saveState();
+  render();
+  ['fTitle','fTarget','fUnit','fReward'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fCurrent').value = 0;
+  document.getElementById('fXp').value = 150;
+  addOverlay.classList.add('hidden');
+});
+
+document.getElementById('submitSession').addEventListener('click', () => {
+  const min = Number(document.getElementById('fMin').value) || 0;
+  if (min <= 0) return;
+  const xpGain = Math.round((min/30)*15);
+  state.sessions.unshift({ id: uid(), minutes: min, xp: xpGain, at: Date.now() });
+  state.xp += xpGain;
+  saveState();
+  render();
+  document.getElementById('fMin').value = 30;
+  sessionOverlay.classList.add('hidden');
+});
+
+render();
+</script>
+</body>
+</html>
